@@ -18,6 +18,37 @@ if (isset($_SESSION['userID'])) {
 // Base Query - Table name assume kiya hai 'products' (agar table ka naam kuch aur ho jaise 'tbl_products', toh yahan change kar lena)
 $sql = "SELECT * FROM products WHERE status = 'active'";
 
+$selectedCategory = "";
+$selectedCategoryId = null;
+
+if (isset($_GET['category_id']) && !empty(trim($_GET['category_id']))) {
+    $selectedCategoryId = intval($_GET['category_id']);
+} elseif (isset($_GET['category']) && !empty(trim($_GET['category']))) {
+    $categorySlug = strtolower(trim($_GET['category']));
+    $categoryMap = [
+        'mobiles' => 2,
+        'laptops' => 2,
+        'watch' => 2,
+        'travel' => 1,
+        'fragrances' => 1,
+        'facecare' => 1
+    ];
+
+    if (isset($categoryMap[$categorySlug])) {
+        $selectedCategoryId = $categoryMap[$categorySlug];
+    }
+}
+
+if ($selectedCategoryId !== null) {
+    $sql .= " AND catID = '$selectedCategoryId'";
+
+    $catRes = mysqli_query($conn, "SELECT category_name FROM category WHERE id = '$selectedCategoryId' LIMIT 1");
+    if ($catRes && mysqli_num_rows($catRes) > 0) {
+        $catRow = mysqli_fetch_assoc($catRes);
+        $selectedCategory = $catRow['category_name'];
+    }
+}
+
 // Search Query Filter (agar navbar search se query aayi ho)
 $search_query = "";
 if (isset($_GET['search']) && !empty(trim($_GET['search']))) {
@@ -86,14 +117,22 @@ $result = mysqli_query($conn, $sql);
     <div class="shop-header d-flex flex-column flex-md-row justify-content-between align-items-md-center">
         <div>
             <h2 class="fw-bold mb-1">
-                <?php echo !empty($search_query) ? 'Search Results for "' . htmlspecialchars($search_query) . '"' : 'All Products'; ?>
+                <?php
+                if (!empty($search_query)) {
+                    echo 'Search Results for "' . htmlspecialchars($search_query) . '"';
+                } elseif (!empty($selectedCategory)) {
+                    echo htmlspecialchars($selectedCategory) . ' Products';
+                } else {
+                    echo 'All Products';
+                }
+                ?>
             </h2>
             <p class="text-white-50 mb-0 small">Explore our entire collection of fashion, electronics & accessories</p>
         </div>
-        <?php if(!empty($search_query)) { ?>
+        <?php if(!empty($search_query) || !empty($selectedCategory)) { ?>
             <div class="mt-3 mt-md-0">
                 <a href="shop.php" class="btn btn-light rounded-pill px-3 py-1.5 fw-semibold small">
-                    <i class="fa fa-arrow-left me-1"></i> Clear Search
+                    <i class="fa fa-arrow-left me-1"></i> Clear Filter
                 </a>
             </div>
         <?php } ?>

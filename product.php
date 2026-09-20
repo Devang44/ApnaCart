@@ -13,7 +13,7 @@ if(isset($_GET['id']) && !empty($_GET['id'])) {
     if($result && mysqli_num_rows($result) == 1) {
         $row = mysqli_fetch_assoc($result);
         $page_title = $row['pTitle'] . " | ApnaCart";
-        $categoryID = $row['categoryID'] ?? ''; // Agar aapke table me categoryID ho toh related ke liye use hoga
+        $categoryID = $row['catID'] ?? ($row['categoryID'] ?? '');
     } else {
         // Agar product na mile toh shop page par redirect kar dein
         header("Location: shop.php");
@@ -24,12 +24,57 @@ if(isset($_GET['id']) && !empty($_GET['id'])) {
     exit();
 }
 
+$reviewMessage = "";
+$reviewType = "";
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_review'])) {
+    if (!isset($_SESSION['userID'])) {
+        $reviewMessage = "Please login to submit a review.";
+        $reviewType = "warning";
+    } else {
+        $userID = intval($_SESSION['userID']);
+        $rating = isset($_POST['rating']) ? max(1, min(5, floatval($_POST['rating']))) : 5;
+        $reviewText = trim($_POST['review'] ?? '');
+
+        if ($reviewText === '') {
+            $reviewMessage = "Please write a review before submitting.";
+            $reviewType = "warning";
+        } else {
+            $alreadyReviewed = mysqli_query($conn, "SELECT reviewID FROM product_reviews WHERE productID = '$pID' AND userID = '$userID' LIMIT 1");
+
+            if ($alreadyReviewed && mysqli_num_rows($alreadyReviewed) > 0) {
+                $reviewMessage = "You have already reviewed this product.";
+                $reviewType = "warning";
+            } else {
+                $insertQuery = "INSERT INTO product_reviews (productID, userID, rating, review, createdAt) VALUES ('$pID', '$userID', '$rating', '" . mysqli_real_escape_string($conn, $reviewText) . "', NOW())";
+
+                if (mysqli_query($conn, $insertQuery)) {
+                    $avgQuery = mysqli_query($conn, "SELECT AVG(rating) AS avg_rating, COUNT(*) AS total_reviews FROM product_reviews WHERE productID = '$pID'");
+                    if ($avgQuery && $avgRow = mysqli_fetch_assoc($avgQuery)) {
+                        $avgRating = round((float) $avgRow['avg_rating'], 1);
+                        mysqli_query($conn, "UPDATE products SET Prating = '$avgRating' WHERE pID = '$pID'");
+                    }
+                    $reviewMessage = "Thank you! Your review has been submitted.";
+                    $reviewType = "success";
+                } else {
+                    $reviewMessage = "Unable to submit review. Please try again.";
+                    $reviewType = "danger";
+                }
+            }
+        }
+    }
+}
+
 include("include/header.php");
 include("include/navbar.php");
 
 if (isset($_SESSION['cart_message'])) {
     echo '<div class="container my-3"><div class="alert alert-warning rounded-3">' . htmlspecialchars($_SESSION['cart_message']) . '</div></div>';
     unset($_SESSION['cart_message']);
+}
+
+if ($reviewMessage !== '') {
+    echo '<div class="container my-3"><div class="alert alert-' . htmlspecialchars($reviewType) . ' rounded-3">' . htmlspecialchars($reviewMessage) . '</div></div>';
 }
 ?>
 
@@ -109,6 +154,81 @@ if (isset($_SESSION['cart_message'])) {
 
     </div>
 
+    <!-- Reviews Section Start -->
+    <div class="mt-5 pt-4 border-top">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold text-dark mb-1">Customer Reviews</h3>
+                <p class="text-muted small mb-0">Share your feedback for this product</p>
+            </div>
+        </div>
+
+        <div class="row g-4 align-items-start">
+            <div class="col-lg-5">
+                <div class="card border-0 shadow-sm rounded-4 p-4 bg-light h-100">
+                    <h5 class="fw-bold text-dark mb-3">Write a Review</h5>
+
+                    <?php if (isset($_SESSION['userID'])) : ?>
+                        <form method="POST">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Your Rating</label>
+                                <select class="form-select" name="rating" required>
+                                    <option value="5">5 - Excellent</option>
+                                    <option value="4">4 - Very Good</option>
+                                    <option value="3">3 - Good</option>
+                                    <option value="2">2 - Fair</option>
+                                    <option value="1">1 - Poor</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Your Review</label>
+                                <textarea class="form-control" name="review" rows="4" placeholder="Write your review here..." required></textarea>
+                            </div>
+
+                            <button type="submit" name="add_review" class="btn btn-primary rounded-3 px-4">Submit Review</button>
+                        </form>
+                    <?php else : ?>
+                        <div class="alert alert-info rounded-3 mb-0">
+                            Please <a href="login.php" class="alert-link">login</a> to write a review.
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <?php
+                $reviewsQuery = "SELECT r.*, u.fullName FROM product_reviews r LEFT JOIN users u ON u.userID = r.userID WHERE r.productID = '$pID' ORDER BY r.createdAt DESC";
+                $reviewsResult = mysqli_query($conn, $reviewsQuery);
+
+                if ($reviewsResult && mysqli_num_rows($reviewsResult) > 0) {
+                    while ($reviewRow = mysqli_fetch_assoc($reviewsResult)) {
+                        $stars = '';
+                        for ($i = 1; $i <= 5; $i++) {
+                            $stars .= $i <= round($reviewRow['rating']) ? '<i class="fa-solid fa-star text-warning"></i>' : '<i class="fa-regular fa-star text-warning"></i>';
+                        }
+                ?>
+                        <div class="card border-0 shadow-sm rounded-4 p-3 mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <h6 class="fw-bold mb-1"><?php echo htmlspecialchars($reviewRow['fullName'] ?? 'Customer'); ?></h6>
+                                    <div class="text-warning small"><?php echo $stars; ?> <span class="text-muted ms-2"><?php echo number_format((float)$reviewRow['rating'], 1); ?>/5</span></div>
+                                </div>
+                                <small class="text-muted"><?php echo date('d M Y', strtotime($reviewRow['createdAt'])); ?></small>
+                            </div>
+                            <p class="text-muted mb-0"><?php echo nl2br(htmlspecialchars($reviewRow['review'])); ?></p>
+                        </div>
+                <?php
+                    }
+                } else {
+                    echo "<div class='alert alert-light border rounded-3 text-muted mb-0'>No reviews yet. Be the first to review this product.</div>";
+                }
+                ?>
+            </div>
+        </div>
+    </div>
+    <!-- Reviews Section End -->
+
     <!-- Related Products Section Start -->
     <div class="mt-5 pt-4 border-top">
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -121,9 +241,19 @@ if (isset($_SESSION['cart_message'])) {
 
         <div class="row g-4">
             <?php
-            // Related products query (current pID ko exclude karke 4 products fetch karein)
-            $relatedQuery = "SELECT * FROM products WHERE status = 'active' AND pID != '$pID' ORDER BY RAND() LIMIT 4";
+            $relatedQuery = "SELECT * FROM products WHERE status = 'active' AND pID != '$pID'";
+
+            if (!empty($categoryID)) {
+                $relatedQuery .= " AND catID = '" . mysqli_real_escape_string($conn, $categoryID) . "'";
+            }
+
+            $relatedQuery .= " ORDER BY pID DESC LIMIT 4";
             $relatedResult = mysqli_query($conn, $relatedQuery);
+
+            if (!$relatedResult || mysqli_num_rows($relatedResult) === 0) {
+                $fallbackQuery = "SELECT * FROM products WHERE status = 'active' AND pID != '$pID' ORDER BY pID DESC LIMIT 4";
+                $relatedResult = mysqli_query($conn, $fallbackQuery);
+            }
 
             if($relatedResult && mysqli_num_rows($relatedResult) > 0) {
                 while($relRow = mysqli_fetch_assoc($relatedResult)) {

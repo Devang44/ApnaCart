@@ -113,7 +113,7 @@ Swal.fire({
         </div>
         <div class="row g-4 text-center">
             <div class="col-lg-2 col-md-4 col-6">
-                <a href="shop.php?category=mobiles" class="text-decoration-none">
+                <a href="shop.php?category_id=2" class="text-decoration-none">
                     <div class="card border-0 shadow-sm rounded-4 p-3 h-150 category-card">
                         <img src="images/mobile.png" class="img-fluid mx-auto mb-2" style="height: 70px; object-fit: contain;" alt="Mobiles">
                         <h6 class="fw-semibold text-dark mb-0">Mobiles</h6>
@@ -121,7 +121,7 @@ Swal.fire({
                 </a>
             </div>
             <div class="col-lg-2 col-md-4 col-6">
-                <a href="shop.php?category=laptops" class="text-decoration-none">
+                <a href="shop.php?category_id=2" class="text-decoration-none">
                     <div class="card border-0 shadow-sm rounded-4 p-3 h-150 category-card">
                         <img src="images/laptop.png" class="img-fluid mx-auto mb-2" style="height: 70px; object-fit: contain;" alt="Laptops">
                         <h6 class="fw-semibold text-dark mb-0">Laptops</h6>
@@ -129,7 +129,7 @@ Swal.fire({
                 </a>
             </div>
             <div class="col-lg-2 col-md-4 col-6">
-                <a href="shop.php?category=watch" class="text-decoration-none">
+                <a href="shop.php?category_id=2" class="text-decoration-none">
                     <div class="card border-0 shadow-sm rounded-4 p-3 h-150 category-card">
                         <img src="images/watch.png" class="img-fluid mx-auto mb-2" style="height: 70px; object-fit: contain;" alt="Smart Watch">
                         <h6 class="fw-semibold text-dark mb-0">Smart Watch</h6>
@@ -137,7 +137,7 @@ Swal.fire({
                 </a>
             </div>
             <div class="col-lg-2 col-md-4 col-6">
-                <a href="shop.php?category=travel" class="text-decoration-none">
+                <a href="shop.php?category_id=1" class="text-decoration-none">
                     <div class="card border-0 shadow-sm rounded-4 p-3 h-150 category-card">
                         <img src="images/travel.png" class="img-fluid mx-auto mb-2" style="height: 70px; object-fit: contain;" alt="Travel">
                         <h6 class="fw-semibold text-dark mb-0">Travel</h6>
@@ -145,7 +145,7 @@ Swal.fire({
                 </a>
             </div>
             <div class="col-lg-2 col-md-4 col-6">
-                <a href="shop.php?category=fragrances" class="text-decoration-none">
+                <a href="shop.php?category_id=1" class="text-decoration-none">
                     <div class="card border-0 shadow-sm rounded-4 p-3 h-150 category-card">
                         <img src="images/perfume.png" class="img-fluid mx-auto mb-2" style="height: 70px; object-fit: contain;" alt="Fragrances">
                         <h6 class="fw-semibold text-dark mb-0">Fragrances</h6>
@@ -153,7 +153,7 @@ Swal.fire({
                 </a>
             </div>
             <div class="col-lg-2 col-md-4 col-6">
-                <a href="shop.php?category=facecare" class="text-decoration-none">
+                <a href="shop.php?category_id=1" class="text-decoration-none">
                     <div class="card border-0 shadow-sm rounded-4 p-3 h-150 category-card">
                         <img src="images/facecare.png" class="img-fluid mx-auto mb-2" style="height: 70px; object-fit: contain;" alt="Face Care">
                         <h6 class="fw-semibold text-dark mb-0">Face Care</h6>
