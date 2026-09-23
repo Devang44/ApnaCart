@@ -15,7 +15,7 @@ $totalCost = 0;
 $totalProfit = 0;
 $orderRows = [];
 
-$orderSummary = mysqli_query($conn, "SELECT o.orderID, o.userID, o.fullName, o.totalAmount, o.orderDate, o.paymentStatus, o.paymentMethod, o.orderStatus FROM orders o ORDER BY o.orderID DESC");
+$orderSummary = mysqli_query($conn, "SELECT o.orderID, o.userID, o.fullName, o.totalAmount, o.orderDate, o.paymentStatus, o.paymentMethod, o.orderStatus FROM orders o WHERE o.orderStatus = 'Delivered' ORDER BY o.orderID DESC");
 
 if ($orderSummary) {
     $totalOrders = mysqli_num_rows($orderSummary);

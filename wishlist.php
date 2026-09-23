@@ -15,12 +15,22 @@ $userID = intval($_SESSION['userID']);
 if(isset($_GET['action']) && $_GET['action'] == 'add' && isset($_GET['id'])) {
     $pID = intval($_GET['id']);
 
+    if(!isset($_SESSION['userID'])) {
+        $_SESSION['redirect_after_login'] = isset($_GET['return']) ? $_GET['return'] : 'shop.php';
+        header("Location: login.php");
+        exit();
+    }
+
+    $userID = intval($_SESSION['userID']);
+
     // Check karo ki product pehle se wishlist me hai ya nahi
     $check = mysqli_query($conn, "SELECT * FROM wishlist WHERE userID = '$userID' AND pID = '$pID'");
     if(mysqli_num_rows($check) == 0) {
         mysqli_query($conn, "INSERT INTO wishlist (userID, pID) VALUES ('$userID', '$pID')");
     }
-    header("Location: wishlist.php");
+
+    $redirectTo = isset($_GET['return']) ? $_GET['return'] : 'wishlist.php';
+    header("Location: " . $redirectTo);
     exit();
 }
 
@@ -33,9 +43,16 @@ if(isset($_GET['action']) && $_GET['action'] == 'remove' && isset($_GET['wishlis
 }
 
 // 3. Move to Cart Action (Wishlist se seedha Cart me bhejna)
-if(isset($_GET['action']) && $_GET['action'] == 'move_to_cart' && isset($_GET['wishlistID']) && isset($_GET['pID'])) {
-    $wishlistID = intval($_GET['wishlistID']);
+if(isset($_GET['action']) && $_GET['action'] == 'move_to_cart' && isset($_GET['pID'])) {
     $pID = intval($_GET['pID']);
+
+    if(!isset($_SESSION['userID'])) {
+        $_SESSION['redirect_after_login'] = 'cart.php';
+        header("Location: login.php");
+        exit();
+    }
+
+    $userID = intval($_SESSION['userID']);
 
     // Check karo product cart me pehle se hai ya nahi
     $checkCart = mysqli_query($conn, "SELECT * FROM cart WHERE userID = '$userID' AND pID = '$pID'");
@@ -45,10 +62,8 @@ if(isset($_GET['action']) && $_GET['action'] == 'move_to_cart' && isset($_GET['w
         mysqli_query($conn, "INSERT INTO cart (userID, pID, quantity) VALUES ('$userID', '$pID', 1)");
     }
 
-    // Wishlist se remove kar do
-    mysqli_query($conn, "DELETE FROM wishlist WHERE wishlistID = '$wishlistID' AND userID = '$userID'");
-
-    header("Location: wishlist.php");
+    // Wishlist item ko maintain rakho; sirf cart me add karo.
+    header("Location: cart.php");
     exit();
 }
 

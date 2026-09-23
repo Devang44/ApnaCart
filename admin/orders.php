@@ -44,7 +44,7 @@ if ($orders !== null) {
     $deliveredQ = mysqli_query($conn, "SELECT COUNT(*) AS total FROM orders WHERE orderStatus = 'Delivered'");
     $stats['delivered'] = (int) mysqli_fetch_assoc($deliveredQ)['total'];
 
-    $revenueQ = mysqli_query($conn, "SELECT COALESCE(SUM(totalAmount), 0) AS total FROM orders");
+    $revenueQ = mysqli_query($conn, "SELECT COALESCE(SUM(totalAmount), 0) AS total FROM orders WHERE orderStatus = 'Delivered'");
     $stats['revenue'] = (float) mysqli_fetch_assoc($revenueQ)['total'];
 }
 ?>

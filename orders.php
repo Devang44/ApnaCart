@@ -10,6 +10,23 @@ if(!isset($_SESSION['userID'])) {
 }
 
 $userID = intval($_SESSION['userID']);
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order'])) {
+    $cancelOrderID = intval($_POST['order_id']);
+    $cancelCheck = mysqli_query($conn, "SELECT orderID, orderStatus FROM orders WHERE orderID = '$cancelOrderID' AND userID = '$userID' LIMIT 1");
+
+    if ($cancelCheck && mysqli_num_rows($cancelCheck) > 0) {
+        $orderData = mysqli_fetch_assoc($cancelCheck);
+        if (!in_array($orderData['orderStatus'], ['Delivered', 'Cancelled'])) {
+            mysqli_query($conn, "UPDATE orders SET orderStatus = 'Cancelled' WHERE orderID = '$cancelOrderID' AND userID = '$userID'");
+            $_SESSION['order_message'] = "Order #$cancelOrderID has been cancelled successfully.";
+        }
+    }
+
+    header("Location: orders.php");
+    exit();
+}
+
 $page_title = "My Orders | ApnaCart";
 include("include/header.php");
 include("include/navbar.php");
@@ -35,10 +52,18 @@ if(isset($_GET['orderID'])) {
                     <h3 class="fw-bold mb-1">Order Details #<?php echo $order['orderID']; ?></h3>
                     <p class="text-muted small mb-0">Placed on <?php echo date('d M Y, h:i A', strtotime($order['orderDate'])); ?></p>
                 </div>
-                <div class="d-flex gap-2">
+                <div class="d-flex gap-2 flex-wrap">
                     <a href="invoice.php?orderID=<?php echo $order['orderID']; ?>" class="btn btn-success rounded-pill px-4 btn-sm">
                         <i class="fa fa-receipt me-1"></i> View Bill
                     </a>
+                    <?php if (!in_array($order['orderStatus'], ['Delivered', 'Cancelled'])) : ?>
+                        <form method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to cancel this order?');">
+                            <input type="hidden" name="order_id" value="<?php echo $order['orderID']; ?>">
+                            <button type="submit" name="cancel_order" class="btn btn-outline-danger rounded-pill px-4 btn-sm">
+                                <i class="fa fa-times-circle me-1"></i> Cancel Order
+                            </button>
+                        </form>
+                    <?php endif; ?>
                     <a href="orders.php" class="btn btn-outline-secondary rounded-pill px-4 btn-sm">
                         <i class="fa fa-arrow-left me-1"></i> Back to Orders
                     </a>
@@ -125,6 +150,11 @@ if(isset($_GET['orderID'])) {
     $ordersQuery = mysqli_query($conn, "SELECT * FROM orders WHERE userID = '$userID' ORDER BY orderID DESC");
     ?>
     <div class="container my-5">
+        <?php if (isset($_SESSION['order_message'])) : ?>
+            <div class="alert alert-success rounded-3 mb-4">
+                <?php echo htmlspecialchars($_SESSION['order_message']); unset($_SESSION['order_message']); ?>
+            </div>
+        <?php endif; ?>
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h2 class="fw-bold mb-1">My Orders</h2>
@@ -166,9 +196,17 @@ if(isset($_GET['orderID'])) {
                                         <span class="badge bg-primary"><?php echo $ord['orderStatus']; ?></span>
                                     </td>
                                     <td class="text-end">
-                                        <a href="orders.php?orderID=<?php echo $ord['orderID']; ?>" class="btn btn-outline-primary btn-sm rounded-pill px-3">
-                                            View Details <i class="fa fa-arrow-right ms-1"></i>
-                                        </a>
+                                        <div class="d-flex justify-content-end gap-2 flex-wrap">
+                                            <a href="orders.php?orderID=<?php echo $ord['orderID']; ?>" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                                                View Details <i class="fa fa-arrow-right ms-1"></i>
+                                            </a>
+                                            <?php if (!in_array($ord['orderStatus'], ['Delivered', 'Cancelled'])) : ?>
+                                                <form method="POST" class="d-inline" onsubmit="return confirm('Cancel this order?');">
+                                                    <input type="hidden" name="order_id" value="<?php echo $ord['orderID']; ?>">
+                                                    <button type="submit" name="cancel_order" class="btn btn-outline-danger btn-sm rounded-pill px-3">Cancel</button>
+                                                </form>
+                                            <?php endif; ?>
+                                        </div>
                                     </td>
                                 </tr>
                             <?php } ?>

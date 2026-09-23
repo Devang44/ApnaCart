@@ -30,7 +30,7 @@ if ($conn) {
     $ordersTable = mysqli_query($conn, "SHOW TABLES LIKE 'orders'");
     if ($ordersTable && mysqli_num_rows($ordersTable) > 0) {
         $ordersCount = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) AS total FROM orders"))['total'];
-        $revenue = (float) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COALESCE(SUM(totalAmount), 0) AS total FROM orders"))['total'];
+        $revenue = (float) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COALESCE(SUM(totalAmount), 0) AS total FROM orders WHERE orderStatus = 'Delivered'"))['total'];
         $pendingOrders = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) AS total FROM orders WHERE orderStatus IN ('Pending', 'Processing', 'Shipped', 'Placed')"))['total'];
     }
 }
