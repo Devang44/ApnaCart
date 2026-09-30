@@ -233,6 +233,13 @@ if(isset($_POST['login']))
                 </a>
             </div>
 
+            <?php if(isset($_SESSION['registration_success'])) { ?>
+                <div class="alert alert-success d-flex align-items-center py-2 px-3 mb-3 rounded-3" role="alert">
+                    <i class="fa-solid fa-circle-check me-2"></i>
+                    <div class="small fw-semibold"><?php echo htmlspecialchars($_SESSION['registration_success']); unset($_SESSION['registration_success']); ?></div>
+                </div>
+            <?php } ?>
+
             <?php if($error != "") { ?>
                 <div class="alert alert-danger d-flex align-items-center py-2 px-3 mb-3 rounded-3" role="alert">
                     <i class="fa-solid fa-circle-exclamation me-2"></i>

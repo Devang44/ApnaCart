@@ -111,6 +111,26 @@ CREATE TABLE `offers` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `admins`
+--
+
+CREATE TABLE `admins` (
+  `adminID` int(11) NOT NULL AUTO_INCREMENT,
+  `adminName` varchar(100) NOT NULL,
+  `email` varchar(190) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `status` enum('Active','Blocked') NOT NULL DEFAULT 'Active',
+  `createdAt` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`adminID`),
+  UNIQUE KEY `email` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+INSERT INTO `admins` (`adminID`, `adminName`, `email`, `password`, `status`) VALUES
+(1, 'ApnaCart Admin', 'admin@apnacart.com', '$2y$10$.QvYyM2v/c21NvMHBzvbFOsMQXMaHqtRfBwbzfakRamNM0Qetf736', 'Active');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `orders`
 --
 
@@ -129,6 +149,28 @@ CREATE TABLE `orders` (
   `orderStatus` varchar(30) DEFAULT 'Placed',
   `orderDate` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `order_cancellations`
+--
+
+CREATE TABLE `order_cancellations` (
+  `cancellationID` int(11) NOT NULL,
+  `orderID` int(11) NOT NULL,
+  `userID` int(11) NOT NULL,
+  `reason` varchar(100) NOT NULL,
+  `details` varchar(500) DEFAULT NULL,
+  `canceledAt` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+ALTER TABLE `order_cancellations`
+  ADD PRIMARY KEY (`cancellationID`),
+  ADD UNIQUE KEY `orderID` (`orderID`);
+
+ALTER TABLE `order_cancellations`
+  MODIFY `cancellationID` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- Dumping data for table `orders`

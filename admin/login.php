@@ -15,17 +15,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_login'])) {
     if ($email === "" || $password === "") {
         $error = "Please enter both email and password.";
     } else {
-        $admin_email = "admin@apnacart.com";
-        $admin_password = "admin123";
-
-        if ($email === $admin_email && $password === $admin_password) {
-            $_SESSION['admin_id'] = 1;
-            $_SESSION['admin_name'] = "ApnaCart Admin";
-            $_SESSION['admin_email'] = $admin_email;
-            header("Location: index.php");
-            exit();
+        $stmt = mysqli_prepare($conn, "SELECT adminID, adminName, email, password, status FROM admins WHERE email = ? LIMIT 1");
+        if (!$stmt) {
+            $error = "Admin accounts are not configured. Run admin/setup.sql in your database first.";
         } else {
-            $error = "Invalid admin credentials.";
+            mysqli_stmt_bind_param($stmt, "s", $email);
+            mysqli_stmt_execute($stmt);
+            $result = mysqli_stmt_get_result($stmt);
+            $admin = $result ? mysqli_fetch_assoc($result) : null;
+            mysqli_stmt_close($stmt);
+
+            $passwordVerified = $admin && (
+                password_verify($password, $admin['password']) ||
+                hash_equals($admin['password'], $password)
+            );
+
+            if ($admin && $admin['status'] === 'Active' && $passwordVerified) {
+                if (!password_verify($password, $admin['password'])) {
+                    $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+                    $upgradeStmt = mysqli_prepare($conn, "UPDATE admins SET password = ? WHERE adminID = ?");
+                    if ($upgradeStmt) {
+                        mysqli_stmt_bind_param($upgradeStmt, "si", $passwordHash, $admin['adminID']);
+                        mysqli_stmt_execute($upgradeStmt);
+                        mysqli_stmt_close($upgradeStmt);
+                    }
+                }
+
+                session_regenerate_id(true);
+                $_SESSION['admin_id'] = (int)$admin['adminID'];
+                $_SESSION['admin_name'] = $admin['adminName'];
+                $_SESSION['admin_email'] = $admin['email'];
+                header("Location: index.php");
+                exit();
+            }
+
+            $error = "Invalid admin credentials or inactive account.";
         }
     }
 }
@@ -107,20 +131,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_login'])) {
             <form method="POST">
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Admin Email</label>
-                    <input type="email" class="form-control" name="email" value="admin@apnacart.com" required>
+                    <input type="email" class="form-control" name="email" value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>" placeholder="Enter admin email" autocomplete="username" required>
                 </div>
                 <div class="mb-4">
                     <label class="form-label fw-semibold">Password</label>
-                    <input type="password" class="form-control" name="password" value="admin123" required>
+                    <input type="password" class="form-control" name="password" autocomplete="current-password" required>
                 </div>
                 <button type="submit" name="admin_login" class="btn btn-primary w-100">
                     <i class="fa-solid fa-right-to-bracket me-2"></i>Login to Dashboard
                 </button>
             </form>
 
-            <div class="mt-4 small text-muted text-center">
-                Demo admin credentials: <strong>admin@apnacart.com</strong> / <strong>admin123</strong>
-            </div>
         </div>
     </div>
 </body>

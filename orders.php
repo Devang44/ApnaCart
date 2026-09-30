@@ -11,22 +11,6 @@ if(!isset($_SESSION['userID'])) {
 
 $userID = intval($_SESSION['userID']);
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order'])) {
-    $cancelOrderID = intval($_POST['order_id']);
-    $cancelCheck = mysqli_query($conn, "SELECT orderID, orderStatus FROM orders WHERE orderID = '$cancelOrderID' AND userID = '$userID' LIMIT 1");
-
-    if ($cancelCheck && mysqli_num_rows($cancelCheck) > 0) {
-        $orderData = mysqli_fetch_assoc($cancelCheck);
-        if (!in_array($orderData['orderStatus'], ['Delivered', 'Cancelled'])) {
-            mysqli_query($conn, "UPDATE orders SET orderStatus = 'Cancelled' WHERE orderID = '$cancelOrderID' AND userID = '$userID'");
-            $_SESSION['order_message'] = "Order #$cancelOrderID has been cancelled successfully.";
-        }
-    }
-
-    header("Location: orders.php");
-    exit();
-}
-
 $page_title = "My Orders | ApnaCart";
 include("include/header.php");
 include("include/navbar.php");
@@ -57,12 +41,9 @@ if(isset($_GET['orderID'])) {
                         <i class="fa fa-receipt me-1"></i> View Bill
                     </a>
                     <?php if (!in_array($order['orderStatus'], ['Delivered', 'Cancelled'])) : ?>
-                        <form method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to cancel this order?');">
-                            <input type="hidden" name="order_id" value="<?php echo $order['orderID']; ?>">
-                            <button type="submit" name="cancel_order" class="btn btn-outline-danger rounded-pill px-4 btn-sm">
-                                <i class="fa fa-times-circle me-1"></i> Cancel Order
-                            </button>
-                        </form>
+                        <a href="cancel-order.php?orderID=<?php echo (int)$order['orderID']; ?>" class="btn btn-outline-danger rounded-pill px-4 btn-sm">
+                            <i class="fa fa-times-circle me-1"></i> Cancel Order
+                        </a>
                     <?php endif; ?>
                     <a href="orders.php" class="btn btn-outline-secondary rounded-pill px-4 btn-sm">
                         <i class="fa fa-arrow-left me-1"></i> Back to Orders
@@ -201,10 +182,7 @@ if(isset($_GET['orderID'])) {
                                                 View Details <i class="fa fa-arrow-right ms-1"></i>
                                             </a>
                                             <?php if (!in_array($ord['orderStatus'], ['Delivered', 'Cancelled'])) : ?>
-                                                <form method="POST" class="d-inline" onsubmit="return confirm('Cancel this order?');">
-                                                    <input type="hidden" name="order_id" value="<?php echo $ord['orderID']; ?>">
-                                                    <button type="submit" name="cancel_order" class="btn btn-outline-danger btn-sm rounded-pill px-3">Cancel</button>
-                                                </form>
+                                                <a href="cancel-order.php?orderID=<?php echo (int)$ord['orderID']; ?>" class="btn btn-outline-danger btn-sm rounded-pill px-3">Cancel</a>
                                             <?php endif; ?>
                                         </div>
                                     </td>

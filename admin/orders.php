@@ -9,9 +9,17 @@ if (!isset($_SESSION['admin_id'])) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_order_status'])) {
     $orderID = intval($_POST['order_id']);
-    $status = $_POST['status'];
-    if ($status !== '') {
-        mysqli_query($conn, "UPDATE orders SET orderStatus = '" . mysqli_real_escape_string($conn, $status) . "' WHERE orderID = '$orderID'");
+    $status = $_POST['status'] ?? '';
+    $allowedStatuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
+    if (in_array($status, $allowedStatuses, true)) {
+        $currentResult = mysqli_query($conn, "SELECT orderStatus FROM orders WHERE orderID = '$orderID' LIMIT 1");
+        if ($currentResult && mysqli_num_rows($currentResult) > 0) {
+            $currentOrder = mysqli_fetch_assoc($currentResult);
+            if ($currentOrder['orderStatus'] !== 'Cancelled') {
+                $safeStatus = mysqli_real_escape_string($conn, $status);
+                mysqli_query($conn, "UPDATE orders SET orderStatus = '$safeStatus' WHERE orderID = '$orderID' AND orderStatus <> 'Cancelled'");
+            }
+        }
     }
     header("Location: orders.php");
     exit();
@@ -159,14 +167,14 @@ if ($orders !== null) {
                                                     <td>
                                                         <form method="POST" class="d-flex gap-2 align-items-center">
                                                             <input type="hidden" name="order_id" value="<?php echo $order['orderID']; ?>">
-                                                            <select name="status" class="form-select form-select-sm" style="width: 130px;">
+                                                            <select name="status" class="form-select form-select-sm" style="width: 130px;" <?php echo $order['orderStatus'] === 'Cancelled' ? 'disabled' : ''; ?>>
                                                                 <option value="Pending" <?php echo ($order['orderStatus'] == 'Pending') ? 'selected' : ''; ?>>Pending</option>
                                                                 <option value="Processing" <?php echo ($order['orderStatus'] == 'Processing') ? 'selected' : ''; ?>>Processing</option>
                                                                 <option value="Shipped" <?php echo ($order['orderStatus'] == 'Shipped') ? 'selected' : ''; ?>>Shipped</option>
                                                                 <option value="Delivered" <?php echo ($order['orderStatus'] == 'Delivered') ? 'selected' : ''; ?>>Delivered</option>
                                                                 <option value="Cancelled" <?php echo ($order['orderStatus'] == 'Cancelled') ? 'selected' : ''; ?>>Cancelled</option>
                                                             </select>
-                                                            <button class="btn btn-sm btn-primary" type="submit" name="update_order_status">Update</button>
+                                                            <button class="btn btn-sm btn-primary" type="submit" name="update_order_status" <?php echo $order['orderStatus'] === 'Cancelled' ? 'disabled title="Cancelled orders cannot be changed"' : ''; ?>>Update</button>
                                                         </form>
                                                     </td>
                                                 </tr>

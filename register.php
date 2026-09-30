@@ -94,19 +94,9 @@ if(isset($_POST['register']))
 
                 if($insert)
                 {
-                   echo "
-                <script>
-                document.addEventListener('DOMContentLoaded', function () {
-                    Swal.fire({
-                    icon: 'success',
-                    title: 'Registration Successful',
-                    text: 'Now Login to Continue',
-                    confirmButtonColor: '#2563eb'
-                }).then(function () {
-                    window.location='login.php';
-                });
-            });
-            </script>";
+                    $_SESSION['registration_success'] = "Registration successful. Please log in to continue.";
+                    header("Location: login.php");
+                    exit();
                 }
                 else
                 {
@@ -332,7 +322,7 @@ if(isset($_POST['register']))
                     <label class="form-label">Mobile Number</label>
                     <div class="input-group">
                         <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-phone"></i></span>
-                        <input type="text" class="form-control border-start-0 ps-0" maxlength="10" name="mobile" placeholder="10-digit mobile number" value="<?php echo isset($mobile)?htmlspecialchars($mobile):''; ?>" required>
+                        <input type="tel" inputmode="numeric" pattern="[0-9]{10}" class="form-control border-start-0 ps-0" maxlength="10" name="mobile" placeholder="10-digit mobile number" value="<?php echo isset($mobile)?htmlspecialchars($mobile):''; ?>" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)" required>
                     </div>
                 </div>
 
@@ -346,7 +336,7 @@ if(isset($_POST['register']))
                             <i class="fa-solid fa-eye" id="eyeIcon"></i>
                         </button>
                     </div>
-                    <div id="strength" class="form-text mt-1 small"></div>
+                    <div id="strength" class="form-text mt-1 small">Use at least 8 characters, including uppercase, lowercase, a number, and a special character.</div>
                 </div>
 
                 <!-- Confirm Password -->
@@ -354,16 +344,17 @@ if(isset($_POST['register']))
                     <label class="form-label">Confirm Password</label>
                     <div class="input-group">
                         <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-lock"></i></span>
-                        <input type="password" class="form-control border-start-0 ps-0" name="confirmPassword" placeholder="Re-enter your password" required>
+                        <input type="password" class="form-control border-start-0 ps-0" id="confirmPassword" name="confirmPassword" placeholder="Re-enter your password" oninput="checkPasswordMatch()" required>
                     </div>
+                    <div id="passwordMatch" class="form-text mt-1 small">Re-enter the same password to confirm it.</div>
                 </div>
 
                 <!-- Gender -->
                 <div class="mb-3">
                     <label class="form-label">Gender</label>
                     <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-venus-mars"></i></span>
-                        <select class="form-select border-start-0 ps-0" name="gender">
+                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-venus-mars" id="genderIcon"></i></span>
+                        <select class="form-select border-start-0 ps-0" id="gender" name="gender" onchange="updateGenderIcon()">
                             <option value="Male">Male</option>
                             <option value="Female">Female</option>
                             <option value="Other">Other</option>
@@ -425,7 +416,34 @@ function checkStrength(){
     } else {
         strength.innerHTML = "<span class='text-danger fw-semibold'>Weak Password</span>";
     }
+    checkPasswordMatch();
 }
+
+function checkPasswordMatch(){
+    var password = document.getElementById("password").value;
+    var confirmPassword = document.getElementById("confirmPassword").value;
+    var match = document.getElementById("passwordMatch");
+
+    if(confirmPassword.length === 0){
+        match.textContent = "Re-enter the same password to confirm it.";
+        match.className = "form-text mt-1 small";
+    } else if(password === confirmPassword){
+        match.textContent = "Passwords match.";
+        match.className = "form-text mt-1 small text-success fw-semibold";
+    } else {
+        match.textContent = "Passwords do not match.";
+        match.className = "form-text mt-1 small text-danger fw-semibold";
+    }
+}
+
+function updateGenderIcon(){
+    var gender = document.getElementById("gender").value;
+    var icon = document.getElementById("genderIcon");
+    icon.classList.remove("fa-mars", "fa-venus", "fa-venus-mars");
+    icon.classList.add(gender === "Male" ? "fa-mars" : (gender === "Female" ? "fa-venus" : "fa-venus-mars"));
+}
+
+updateGenderIcon();
 </script>
 </body>
 </html>
